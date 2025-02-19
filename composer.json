@@ -1,0 +1,10 @@
+{
+    "autoload": {
+      "psr-4": {
+        "App\\": "./"
+      }
+    },
+    "require": {
+        "tecnickcom/tcpdf": "^6.8"
+    }
+}
