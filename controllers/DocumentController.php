@@ -68,10 +68,55 @@ class DocumentController
             mkdir('uploads/documents', 0777, true);
         }
 
+        // $pdf = new TCPDF();
+        // $pdf->AddPage();
+        // $pdf->SetFont('Helvetica', '', 12);
+        // $pdf->Cell(0, 10, "Documento generado para la clave: $clave", 0, 1);
+
+        // Datos simulados de la boleta
+        $clave = "ABC123";
+        $empleado = "Isaac Estrada";
+        $empresa = "Call Center - RRHH";
+        $salario_base = 1500.00;
+        $bonos = 200.00;
+        $descuentos = 100.00;
+        $total_pago = $salario_base + $bonos - $descuentos;
+        $fecha_emision = date("d/m/Y");
+
+        // Crear PDF
         $pdf = new TCPDF();
         $pdf->AddPage();
         $pdf->SetFont('Helvetica', '', 12);
-        $pdf->Cell(0, 10, "Documento generado para la clave: $clave", 0, 1);
+
+        // Título
+        $pdf->Cell(0, 10, "BOLETA DE PAGO", 0, 1, 'C');
+        $pdf->Ln(5); // Salto de línea
+
+        // Información del empleado
+        $pdf->Cell(0, 10, "Empresa: $empresa", 0, 1);
+        $pdf->Cell(0, 10, "Empleado: $empleado", 0, 1);
+        $pdf->Cell(0, 10, "Clave: $clave", 0, 1);
+        $pdf->Cell(0, 10, "Fecha de emisión: $fecha_emision", 0, 1);
+        $pdf->Ln(5);
+
+        // Tabla de pagos
+        $pdf->SetFont('Helvetica', 'B', 12);
+        $pdf->Cell(80, 10, "Concepto", 1);
+        $pdf->Cell(40, 10, "Monto", 1, 1);
+
+        $pdf->SetFont('Helvetica', '', 12);
+        $pdf->Cell(80, 10, "Salario Base", 1);
+        $pdf->Cell(40, 10, "$" . number_format($salario_base, 2), 1, 1);
+
+        $pdf->Cell(80, 10, "Bonos", 1);
+        $pdf->Cell(40, 10, "$" . number_format($bonos, 2), 1, 1);
+
+        $pdf->Cell(80, 10, "Descuentos", 1);
+        $pdf->Cell(40, 10, "-$" . number_format($descuentos, 2), 1, 1);
+
+        $pdf->SetFont('Helvetica', 'B', 12);
+        $pdf->Cell(80, 10, "Total a Pagar", 1);
+        $pdf->Cell(40, 10, "$" . number_format($total_pago, 2), 1, 1);
 
         $filePath = dirname(__DIR__) . "/uploads/documents/$name.pdf"; //Ruta absoluta para guardar el pdf
 
@@ -111,10 +156,22 @@ class DocumentController
 
         if ($document) {
 
-            $filePath = $document->file_path;
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="documento.pdf"');
-            readfile($filePath);
+            $url = stripslashes($document->file_path);
+
+            echo json_encode([
+                'status' => true,
+                'message' => 'Documento encontrado',
+                "filename" => $document->document_name,
+                "url" => $url
+            ], JSON_UNESCAPED_SLASHES);
+
+            exit;
+
+            // $filePath = $document->file_path;
+            // header('Content-Type: application/pdf');
+            // header("Content-Disposition: attachment; filename=\"$document->document_name\"");
+            // // header('Content-Disposition: attachment; filename="documento.pdf"');
+            // readfile($filePath);
 
         } else {
 
