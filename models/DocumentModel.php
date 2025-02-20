@@ -13,7 +13,14 @@ class DocumentModel
     public function getById($id)
     {
         try {
-            $query = "SELECT * FROM documents WHERE id = :id";
+            // $query = "SELECT * FROM documents WHERE id = :id";
+            $query = "SELECT d.id, d.document_name, d.file_path, d.created_at, d.response_id, r.response_text, t.name
+                        FROM documents d
+                        INNER JOIN responses r 
+                        ON d.response_id = r.id
+                        INNER JOIN types_documents t  
+                        ON r.type_response = t.id
+                        WHERE d.id = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
@@ -39,12 +46,10 @@ class DocumentModel
             $stmt->bindParam(':response_id', $document['responseId']);
 
             if ($stmt->execute()) {
-                return ['error' => false, 'id' => $this->conn->lastInsertId()];
-
+                return ['error' => false, 'id' => intval($this->conn->lastInsertId())];
             } else {
                 throw new Exception('Error al ejecutar la consulta');
             }
-
         } catch (Exception $e) {
             // En caso de error, se lanza una excepción
             return ['error' => true, 'message' => $e->getMessage()];

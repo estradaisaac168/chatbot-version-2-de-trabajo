@@ -3,6 +3,9 @@ require_once './models/DocumentModel.php';
 require_once './models/OptionModel.php';
 require_once './helpers/TCPDF/tcpdf.php';
 require_once './helpers/helper.php';
+require './helpers/sendEmail.php';
+require_once './config/config.php';
+
 
 
 class DocumentController
@@ -58,75 +61,62 @@ class DocumentController
     public function generatePDF()
     {
 
-        $clave = $_POST['clave'] ?? $_POST['clave']; // Obtener clave desde el formulario
+        // die(json_encode([
+        //     'status' => false,
+        //     'message' => intval($_POST['type'])
+        // ]));
+
+        
+
+        if (!isset($_POST['type'])) {
+            die(json_encode([
+                'status' => false,
+                'message' => 'Las variable type no está definida'
+            ]));
+        }
+
+        if (empty(trim($_POST['type']))) {
+            die(json_encode([
+                'status' => false,
+                'message' => 'La variable type está vacía'
+            ]));
+        }
+
+        // $type = $_POST['type'] ?? $_POST['type']; // Obtener clave desde el formulario
         $responseId = $_POST['responseId'] ?? $_POST['responseId'];
+        $filePath = '';
 
 
-        $name = rand(10000, 99999); //Nombre aleatorio para el documento.
+        switch (intval($_POST['type'])) {
+            case 1:
+                $nameFile = 'constancia_laboral_' . rand(10000, 99999);
+                $filePath = generarConstanciaSalarial($nameFile, "Isaac", "RRHH", 1000, 30, 1500, date("d/m/Y") );
+                break;
+
+            case 2:
+                $nameFile = 'boleta_pago_' . rand(10000, 99999);
+                $filePath = generarBoletaPago($nameFile);
+                break;
+
+            default:
+            // $nameFile = 'constancia_laboral_' . rand(10000, 99999);
+            // $filePath = generarConstanciaLaboral($nameFile , "Isaac", "RRHH", "Ingeniero", date("d/m/Y"));
+
+                break;
+        }
+
+
+        // $name = rand(10000, 99999); //Nombre aleatorio para el documento.
 
         if (!is_dir('uploads/documents')) {  //Revisa si existe el directorio sino lo crea.
             mkdir('uploads/documents', 0777, true);
         }
 
-        // $pdf = new TCPDF();
-        // $pdf->AddPage();
-        // $pdf->SetFont('Helvetica', '', 12);
-        // $pdf->Cell(0, 10, "Documento generado para la clave: $clave", 0, 1);
-
-        // Datos simulados de la boleta
-        $clave = "ABC123";
-        $empleado = "Isaac Estrada";
-        $empresa = "Call Center - RRHH";
-        $salario_base = 1500.00;
-        $bonos = 200.00;
-        $descuentos = 100.00;
-        $total_pago = $salario_base + $bonos - $descuentos;
-        $fecha_emision = date("d/m/Y");
-
-        // Crear PDF
-        $pdf = new TCPDF();
-        $pdf->AddPage();
-        $pdf->SetFont('Helvetica', '', 12);
-
-        // Título
-        $pdf->Cell(0, 10, "BOLETA DE PAGO", 0, 1, 'C');
-        $pdf->Ln(5); // Salto de línea
-
-        // Información del empleado
-        $pdf->Cell(0, 10, "Empresa: $empresa", 0, 1);
-        $pdf->Cell(0, 10, "Empleado: $empleado", 0, 1);
-        $pdf->Cell(0, 10, "Clave: $clave", 0, 1);
-        $pdf->Cell(0, 10, "Fecha de emisión: $fecha_emision", 0, 1);
-        $pdf->Ln(5);
-
-        // Tabla de pagos
-        $pdf->SetFont('Helvetica', 'B', 12);
-        $pdf->Cell(80, 10, "Concepto", 1);
-        $pdf->Cell(40, 10, "Monto", 1, 1);
-
-        $pdf->SetFont('Helvetica', '', 12);
-        $pdf->Cell(80, 10, "Salario Base", 1);
-        $pdf->Cell(40, 10, "$" . number_format($salario_base, 2), 1, 1);
-
-        $pdf->Cell(80, 10, "Bonos", 1);
-        $pdf->Cell(40, 10, "$" . number_format($bonos, 2), 1, 1);
-
-        $pdf->Cell(80, 10, "Descuentos", 1);
-        $pdf->Cell(40, 10, "-$" . number_format($descuentos, 2), 1, 1);
-
-        $pdf->SetFont('Helvetica', 'B', 12);
-        $pdf->Cell(80, 10, "Total a Pagar", 1);
-        $pdf->Cell(40, 10, "$" . number_format($total_pago, 2), 1, 1);
-
-        $filePath = dirname(__DIR__) . "/uploads/documents/$name.pdf"; //Ruta absoluta para guardar el pdf
-
-        $pdf->Output($filePath, 'F');  // Guardando el pdf
-
         // Guardar en la base de datos
 
         $document = [];
 
-        $document['name'] = $name . ".pdf";
+        $document['name'] = $nameFile . ".pdf";
         $document['path'] = $filePath;
         $document['createdAt'] = date('Y-m-d H:i:s');
         $document['responseId'] = $responseId;
@@ -137,7 +127,7 @@ class DocumentController
         if (!isset($response['error']) && $response['error']) {
             die(json_encode(["status" => false, "message" => $response['message']]));
         } else {
-            die(json_encode(["status" => true, "message" => "Documento creado con éxito", 'id' => $response['id']]));
+            die(json_encode(["status" => true, "message" => "Documento creado con éxito", "id" => $response['id']])); //Me retorna el id del ultimo creado
         }
     }
 
@@ -169,7 +159,6 @@ class DocumentController
             header('Content-Type: application/pdf');
             header('Content-Disposition: attachment; filename="mi_archivo_real.pdf"');
             readfile($filePath);
-            
         } else {
 
             die(json_encode([
@@ -177,5 +166,80 @@ class DocumentController
                 'message' => 'Documento no encontrado'
             ]));
         }
+    }
+
+
+    public function sendDocument($documentID)
+    {
+        if (!isset($documentID) || empty($documentID)) {
+            // El campo no fue enviado o está vacío
+            die(json_encode([
+                'status' => false,
+                'message' => 'El id del documento no esta definido'
+            ]));
+        }
+
+        $documentModel = new DocumentModel();
+        $document = $documentModel->getById(intval($documentID));
+
+        if ($document) {
+
+            $recipient = 'odiliorosales00@gmail.com';
+            $subject = $document->document_name;
+            $message = '<h1>Hola</h1><p>Se ha adjuntado tu documento.</p>';
+
+            if (sendEmail($recipient, $subject, $message, $document->file_path, $document->document_name)) {
+
+                echo json_encode([
+                    'status' => true,
+                    'message' => "Se mando el correo con exito revisa tu bandeja de entrada o carpeta de spam"
+                ]);
+                die;
+            } else {
+                echo json_encode([
+                    'status' => false,
+                    'message' => "No se pudo mandar el correo"
+                ]);
+                die;
+            }
+        } else {
+            echo json_encode([
+                'status' => false,
+                'message' => "El documento no existe"
+            ]);
+            die;
+        }
+
+
+
+
+
+        // echo sendEmail($recipient, $subject, $message);
+
+        // $documentModel = new DocumentModel();
+        // $document = $documentModel->getById(intval($documentID));
+
+        // if ($document) {
+
+        //     // $url = stripslashes($document->file_path);
+
+        //     // echo json_encode([
+        //     //     'status' => true,
+        //     //     'message' => 'Documento encontrado',
+        //     //     "filename" => $document->document_name,
+        //     //     "url" => $url
+        //     // ], JSON_UNESCAPED_SLASHES);
+
+        //     $filePath = $document->file_path;
+        //     header('Content-Type: application/pdf');
+        //     header('Content-Disposition: attachment; filename="mi_archivo_real.pdf"');
+        //     readfile($filePath);
+        // } else {
+
+        //     die(json_encode([
+        //         'status' => false,
+        //         'message' => 'Documento no encontrado'
+        //     ]));
+        // }
     }
 }

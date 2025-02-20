@@ -75,6 +75,7 @@ function routeRequest($uri, $method)
                 if ($method === 'GET') {
                     // if (count($segments) === 1) $controller->getAllDocument();
                     if (count($segments) === 3 && $segments[0] == 'document' && $segments[1] == 'download') $controller->downloadPDF($segments[2]);
+                    if (count($segments) === 3 && $segments[0] == 'document' && $segments[1] == 'send') $controller->sendDocument($segments[2]);
                 } else if ($method === 'POST' && count($segments) === 2 && $segments[1] == 'generate') {
                     $controller->generatePDF();
                 } else {
