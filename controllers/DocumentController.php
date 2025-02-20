@@ -156,23 +156,20 @@ class DocumentController
 
         if ($document) {
 
-            $url = stripslashes($document->file_path);
+            // $url = stripslashes($document->file_path);
 
-            echo json_encode([
-                'status' => true,
-                'message' => 'Documento encontrado',
-                "filename" => $document->document_name,
-                "url" => $url
-            ], JSON_UNESCAPED_SLASHES);
+            // echo json_encode([
+            //     'status' => true,
+            //     'message' => 'Documento encontrado',
+            //     "filename" => $document->document_name,
+            //     "url" => $url
+            // ], JSON_UNESCAPED_SLASHES);
 
-            exit;
-
-            // $filePath = $document->file_path;
-            // header('Content-Type: application/pdf');
-            // header("Content-Disposition: attachment; filename=\"$document->document_name\"");
-            // // header('Content-Disposition: attachment; filename="documento.pdf"');
-            // readfile($filePath);
-
+            $filePath = $document->file_path;
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="mi_archivo_real.pdf"');
+            readfile($filePath);
+            
         } else {
 
             die(json_encode([
