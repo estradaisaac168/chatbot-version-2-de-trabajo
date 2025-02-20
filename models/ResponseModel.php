@@ -22,7 +22,6 @@ class ResponseModel
         }
     }
 
-
     public function getById($id)
     {
         try {
@@ -36,6 +35,21 @@ class ResponseModel
             return false;
         }
     }
+
+
+    // public function getById($id)
+    // {
+    //     try {
+    //         $query = "SELECT * FROM responses WHERE id = :id";
+    //         $stmt = $this->conn->prepare($query);
+    //         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+    //         $stmt->execute();
+    //         return $stmt->fetch(PDO::FETCH_OBJ);
+    //     } catch (PDOException $e) {
+    //         echo "Error: " . $e->getMessage();
+    //         return false;
+    //     }
+    // }
 
     public function getAllById($question_id)
     {

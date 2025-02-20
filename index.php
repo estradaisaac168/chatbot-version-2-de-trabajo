@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 
-
 // Aquí tu código PHP para manejar las solicitudes
 //echo json_encode(["message" => "CORS configurado correctamente"]);
 

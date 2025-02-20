@@ -10,19 +10,31 @@ class ResponseController
 
     public function getResponseById($id)
     {
-        $responseModel = new ResponseModel();
-        $response = $responseModel->getById($id);
 
-        if (!$response) {
-            die(json_encode([
-                'status' => false,
-                'message' => 'Respuesta no encontrada'
-            ]));
-        } else {
+        if(!validateId($id)){
+            
             echo json_encode([
-                'status' => true,
-                'response' => $response
+                'status' => false,
+                'message' => 'Parametro no valido'
             ]);
+
+            die;
+
+        }else{
+            $responseModel = new ResponseModel();
+            $response = $responseModel->getById($id);
+
+            if (!$response) {
+                die(json_encode([
+                    'status' => false,
+                    'message' => 'Respuesta no encontrada'
+                ]));
+            } else {
+                echo json_encode([
+                    'status' => true,
+                    'response' => $response
+                ]);
+            }
         }
     }
 }
